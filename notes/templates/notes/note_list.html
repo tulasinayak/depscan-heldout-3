@@ -1,0 +1,26 @@
+{% extends "notes/base.html" %}
+{% block content %}
+<form method="get">
+  {{ form.q }}
+  <select name="topic">
+    <option value="">All topics</option>
+    {% for t in topics %}<option value="{{ t.slug }}">{{ t.name }}</option>{% endfor %}
+  </select>
+  <button>Search</button>
+</form>
+{% for note, summary in items %}
+  <article>
+    <h2><a href="{{ note.get_absolute_url }}">{{ note.title }}</a></h2>
+    <p class="meta">{{ note.topic }} &middot; {{ note.author }} &middot; {{ note.created|date:"M j, Y" }}</p>
+    <p>{{ summary }}</p>
+  </article>
+{% empty %}
+  <p>No notes yet.</p>
+{% endfor %}
+{% if page.has_other_pages %}
+  <nav>
+    {% if page.has_previous %}<a href="?page={{ page.previous_page_number }}">Newer</a>{% endif %}
+    {% if page.has_next %}<a href="?page={{ page.next_page_number }}">Older</a>{% endif %}
+  </nav>
+{% endif %}
+{% endblock %}

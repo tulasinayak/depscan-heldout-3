@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en" data-theme="{{ theme }}">
+<head>
+  <meta charset="utf-8">
+  <title>{% block title %}Fieldnotes{% endblock %}</title>
+</head>
+<body>
+  <header>
+    <a href="{% url 'notes:list' %}">Fieldnotes</a>
+    <a href="{% url 'notes:sources' %}">Sources</a>
+    {% if user.is_authenticated %}<a href="{% url 'notes:create' %}">New note</a>{% endif %}
+    <form method="post" action="{% url 'notes:theme' %}">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+      <button name="theme" value="{% if theme == 'dark' %}light{% else %}dark{% endif %}">Toggle theme</button>
+    </form>
+  </header>
+  {% for message in messages %}<p class="message">{{ message }}</p>{% endfor %}
+  <main>{% block content %}{% endblock %}</main>
+</body>
+</html>

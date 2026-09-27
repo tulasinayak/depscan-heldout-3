@@ -1,0 +1,12 @@
+{% extends "notes/base.html" %}
+{% block content %}
+<h1>Sources</h1>
+<ul>
+  {% for source in sources %}
+    <li><a href="{{ source.homepage }}">{{ source.title }}</a> ({{ source.domain }})</li>
+  {% empty %}
+    <li>No sources yet.</li>
+  {% endfor %}
+</ul>
+{% if user.is_authenticated %}<a href="{% url 'notes:source_create' %}">Add a source</a>{% endif %}
+{% endblock %}

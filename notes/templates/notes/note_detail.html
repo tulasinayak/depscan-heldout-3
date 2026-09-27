@@ -1,0 +1,10 @@
+{% extends "notes/base.html" %}
+{% block title %}{{ note.title }} - Fieldnotes{% endblock %}
+{% block content %}
+<article>
+  <h1>{{ note.title }}</h1>
+  <p class="meta">{{ note.topic }} &middot; {{ note.author }} &middot; {{ note.created|date:"M j, Y" }}</p>
+  {% if note.source %}<p>Source: <a href="{{ note.source.homepage }}">{{ note.source.title }}</a></p>{% endif %}
+  <div class="body">{{ body_html|safe }}</div>
+</article>
+{% endblock %}

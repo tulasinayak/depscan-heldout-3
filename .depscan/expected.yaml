@@ -1,0 +1,183 @@
+# Answer key for depscan-heldout-3 (Django "fieldnotes" site).
+# Advisory set = every distinct OSV advisory for every pin in requirements.txt and requirements-dev.txt
+# (checked with heldout-kit/osv_query.py on 2026-09-27): django 6.0.6 x4, markdown 3.7 x1,
+# bleach 6.2.0 x2, pyyaml 5.3.1 x1 = 8. All other pins return 0.
+advisories:
+  - id: CVE-2026-48588
+    package: django
+    expected: likely_affected
+    scenario: reachable_via_framework
+    reason: "UpdateCacheMiddleware only skipped caching cookie-setting, Vary: Cookie responses when the request had no cookies at all. The site enables per-site caching (UpdateCacheMiddleware/FetchFromCacheMiddleware) and every page renders {% csrf_token %} (theme form in base.html), so responses set the CSRF cookie with Vary: Cookie; visitors carrying the unrelated fieldnotes_theme cookie get those responses stored in the shared DatabaseCache."
+    key_location: fieldnotes/settings.py:21
+  - id: CVE-2026-53878
+    package: django
+    expected: likely_not_affected
+    scenario: safe_arguments
+    reason: "DomainNameValidator accepts a trailing newline, which matters only when values bypass form fields and reach a raw HTTP header. Source.domain is only ever set through SourceForm / the admin ModelForm (forms.CharField strips surrounding whitespace, the case Django itself says is unaffected), and the value is only rendered into HTML links, never into a response header."
+    key_location: notes/models.py:21
+  - id: CVE-2026-53877
+    package: django
+    expected: likely_not_affected
+    scenario: framework_dependency_unused_api
+    reason: "Heap over-read in django.contrib.gis.gdal.GDALRaster built from bytes. GeoDjango is not in INSTALLED_APPS, nothing imports django.contrib.gis, and the database is plain SQLite."
+    key_location: fieldnotes/settings.py:10
+  - id: CVE-2026-15830
+    package: django
+    expected: likely_not_affected
+    scenario: framework_dependency_unused_api
+    reason: "Unbounded recursion in django.contrib.gis.geos.GEOSGeometry / GeometryField parsing nested GEOMETRYCOLLECTION. No GeoDjango app, geometry field, form field or GEOS import exists in the project."
+    key_location: fieldnotes/settings.py:10
+  - id: CVE-2025-69534
+    package: markdown
+    expected: likely_affected
+    scenario: reachable_untrusted_input
+    reason: "Malformed '<![' raw-HTML sequences make Python-Markdown raise an uncaught exception on Python < 3.13 (fixed in CPython 3.13, worked around in Markdown 3.8.1). render_markdown() calls markdown.markdown() on member-written note bodies and on arbitrary text POSTed to /preview/; the project targets Python 3.12."
+    key_location: notes/rendering.py:22
+  - id: GHSA-8rfp-98v4-mmr6
+    package: bleach
+    expected: likely_affected
+    scenario: reachable_untrusted_input
+    reason: "bleach.clean lets through javascript URIs obfuscated with Unicode > U+00A0 when 'a' is an allowed tag and 'href' an allowed attribute. render_markdown() cleans member-supplied HTML with ALLOWED_TAGS containing 'a' and ALLOWED_ATTRIBUTES {'a': ['href', 'title']}, so the protocol allowlist can be bypassed (browser impact limited, per advisory)."
+    key_location: notes/rendering.py:23
+  - id: GHSA-gj48-438w-jh9v
+    package: bleach
+    expected: likely_not_affected
+    scenario: safe_arguments
+    reason: "The gap is that formaction values are not protocol-checked, which only matters if the caller allows the formaction attribute (on button/input). The app's allowlist has no button/input tags and no formaction attribute, so bleach strips it."
+    key_location: notes/rendering.py:11
+  - id: CVE-2020-14343
+    package: pyyaml
+    expected: likely_not_affected
+    scenario: test_only
+    reason: "Code execution via yaml.full_load / FullLoader on attacker-controlled YAML. The only yaml.load(..., Loader=yaml.FullLoader) call is in the test suite, reading the repository's own fixtures/demo.yaml; PyYAML is only in requirements-dev.txt and never imported by application code."
+    key_location: notes/tests/test_fixtures.py:14
+
+expected_sites:
+  - {package: bleach, location: "notes/rendering.py:1", symbol: bleach}
+  - {package: bleach, location: "notes/rendering.py:3", symbol: bleach.callbacks}
+  - {package: bleach, location: "notes/rendering.py:23", symbol: bleach.clean}
+  - {package: bleach, location: "notes/rendering.py:30", symbol: bleach.linkify}
+  - {package: bleach, location: "notes/rendering.py:34", symbol: bleach.clean}
+  - {package: django, location: "fieldnotes/urls.py:1", symbol: django.contrib}
+  - {package: django, location: "fieldnotes/urls.py:2", symbol: django.urls}
+  - {package: django, location: "fieldnotes/urls.py:5", symbol: django.urls.path}
+  - {package: django, location: "fieldnotes/urls.py:6", symbol: django.urls.path}
+  - {package: django, location: "fieldnotes/wsgi.py:3", symbol: django.core.wsgi}
+  - {package: django, location: "fieldnotes/wsgi.py:7", symbol: django.core.wsgi.get_wsgi_application}
+  - {package: django, location: "manage.py:8", symbol: django.core.management}
+  - {package: django, location: "manage.py:10", symbol: django.core.management.execute_from_command_line}
+  - {package: django, location: "notes/admin.py:1", symbol: django.contrib}
+  - {package: django, location: "notes/admin.py:6", symbol: django.contrib.admin.register}
+  - {package: django, location: "notes/admin.py:7", symbol: django.contrib.admin.ModelAdmin}
+  - {package: django, location: "notes/admin.py:12", symbol: django.contrib.admin.register}
+  - {package: django, location: "notes/admin.py:13", symbol: django.contrib.admin.ModelAdmin}
+  - {package: django, location: "notes/admin.py:18", symbol: django.contrib.admin.register}
+  - {package: django, location: "notes/admin.py:19", symbol: django.contrib.admin.ModelAdmin}
+  - {package: django, location: "notes/apps.py:1", symbol: django.apps}
+  - {package: django, location: "notes/apps.py:4", symbol: django.apps.AppConfig}
+  - {package: django, location: "notes/context_processors.py:1", symbol: django.conf}
+  - {package: django, location: "notes/context_processors.py:7", symbol: django.conf.settings.THEME_COOKIE}
+  - {package: django, location: "notes/forms.py:1", symbol: django}
+  - {package: django, location: "notes/forms.py:6", symbol: django.forms.ModelForm}
+  - {package: django, location: "notes/forms.py:10", symbol: django.forms.Textarea}
+  - {package: django, location: "notes/forms.py:13", symbol: django.forms.ModelForm}
+  - {package: django, location: "notes/forms.py:22", symbol: django.forms.Form}
+  - {package: django, location: "notes/forms.py:23", symbol: django.forms.CharField}
+  - {package: django, location: "notes/forms.py:24", symbol: django.forms.SlugField}
+  - {package: django, location: "notes/forms.py:27", symbol: django.forms.Form}
+  - {package: django, location: "notes/forms.py:28", symbol: django.forms.CharField}
+  - {package: django, location: "notes/models.py:1", symbol: django.conf}
+  - {package: django, location: "notes/models.py:2", symbol: django.core.validators}
+  - {package: django, location: "notes/models.py:3", symbol: django.db}
+  - {package: django, location: "notes/models.py:4", symbol: django.urls}
+  - {package: django, location: "notes/models.py:5", symbol: django.utils.text}
+  - {package: django, location: "notes/models.py:8", symbol: django.db.models.Model}
+  - {package: django, location: "notes/models.py:9", symbol: django.db.models.CharField}
+  - {package: django, location: "notes/models.py:10", symbol: django.db.models.SlugField}
+  - {package: django, location: "notes/models.py:19", symbol: django.db.models.Model}
+  - {package: django, location: "notes/models.py:20", symbol: django.db.models.CharField}
+  - {package: django, location: "notes/models.py:21", symbol: django.db.models.CharField}
+  - {package: django, location: "notes/models.py:22", symbol: django.db.models.DateTimeField}
+  - {package: django, location: "notes/models.py:35", symbol: django.db.models.Model}
+  - {package: django, location: "notes/models.py:36", symbol: django.db.models.CharField}
+  - {package: django, location: "notes/models.py:37", symbol: django.db.models.SlugField}
+  - {package: django, location: "notes/models.py:38", symbol: django.db.models.TextField}
+  - {package: django, location: "notes/models.py:39", symbol: django.db.models.ForeignKey}
+  - {package: django, location: "notes/models.py:40", symbol: django.db.models.ForeignKey}
+  - {package: django, location: "notes/models.py:41", symbol: django.db.models.ForeignKey}
+  - {package: django, location: "notes/models.py:42", symbol: django.db.models.BooleanField}
+  - {package: django, location: "notes/models.py:43", symbol: django.db.models.DateTimeField}
+  - {package: django, location: "notes/models.py:44", symbol: django.db.models.DateTimeField}
+  - {package: django, location: "notes/models.py:54", symbol: django.utils.text.slugify}
+  - {package: django, location: "notes/models.py:63", symbol: django.urls.reverse}
+  - {package: django, location: "notes/tests/test_fixtures.py:4", symbol: django.contrib.auth}
+  - {package: django, location: "notes/tests/test_fixtures.py:5", symbol: django.test}
+  - {package: django, location: "notes/tests/test_fixtures.py:15", symbol: django.contrib.auth.get_user_model}
+  - {package: django, location: "notes/tests/test_fixtures.py:22", symbol: django.test.TestCase}
+  - {package: django, location: "notes/tests/test_rendering.py:1", symbol: django.test}
+  - {package: django, location: "notes/tests/test_rendering.py:6", symbol: django.test.SimpleTestCase}
+  - {package: django, location: "notes/tests/test_views.py:1", symbol: django.contrib.auth}
+  - {package: django, location: "notes/tests/test_views.py:2", symbol: django.core.management}
+  - {package: django, location: "notes/tests/test_views.py:3", symbol: django.test}
+  - {package: django, location: "notes/tests/test_views.py:4", symbol: django.urls}
+  - {package: django, location: "notes/tests/test_views.py:9", symbol: django.test.override_settings}
+  - {package: django, location: "notes/tests/test_views.py:10", symbol: django.test.TestCase}
+  - {package: django, location: "notes/tests/test_views.py:13", symbol: django.contrib.auth.get_user_model}
+  - {package: django, location: "notes/tests/test_views.py:19", symbol: django.urls.reverse}
+  - {package: django, location: "notes/tests/test_views.py:33", symbol: django.urls.reverse}
+  - {package: django, location: "notes/tests/test_views.py:35", symbol: django.urls.reverse}
+  - {package: django, location: "notes/tests/test_views.py:39", symbol: django.urls.reverse}
+  - {package: django, location: "notes/tests/test_views.py:43", symbol: django.test.TestCase}
+  - {package: django, location: "notes/tests/test_views.py:45", symbol: django.core.management.call_command}
+  - {package: django, location: "notes/urls.py:1", symbol: django.urls}
+  - {package: django, location: "notes/urls.py:8", symbol: django.urls.path}
+  - {package: django, location: "notes/urls.py:9", symbol: django.urls.path}
+  - {package: django, location: "notes/urls.py:10", symbol: django.urls.path}
+  - {package: django, location: "notes/urls.py:11", symbol: django.urls.path}
+  - {package: django, location: "notes/urls.py:12", symbol: django.urls.path}
+  - {package: django, location: "notes/urls.py:13", symbol: django.urls.path}
+  - {package: django, location: "notes/urls.py:14", symbol: django.urls.path}
+  - {package: django, location: "notes/views.py:1", symbol: django.conf}
+  - {package: django, location: "notes/views.py:2", symbol: django.contrib}
+  - {package: django, location: "notes/views.py:3", symbol: django.contrib.auth.decorators}
+  - {package: django, location: "notes/views.py:4", symbol: django.core.paginator}
+  - {package: django, location: "notes/views.py:5", symbol: django.db.models}
+  - {package: django, location: "notes/views.py:6", symbol: django.http}
+  - {package: django, location: "notes/views.py:7", symbol: django.shortcuts}
+  - {package: django, location: "notes/views.py:8", symbol: django.views.decorators.http}
+  - {package: django, location: "notes/views.py:22", symbol: django.db.models.Q}
+  - {package: django, location: "notes/views.py:26", symbol: django.core.paginator.Paginator}
+  - {package: django, location: "notes/views.py:29", symbol: django.shortcuts.render}
+  - {package: django, location: "notes/views.py:33", symbol: django.shortcuts.get_object_or_404}
+  - {package: django, location: "notes/views.py:36", symbol: django.shortcuts.render}
+  - {package: django, location: "notes/views.py:39", symbol: django.contrib.auth.decorators.login_required}
+  - {package: django, location: "notes/views.py:46", symbol: django.contrib.messages.success}
+  - {package: django, location: "notes/views.py:47", symbol: django.shortcuts.redirect}
+  - {package: django, location: "notes/views.py:48", symbol: django.shortcuts.render}
+  - {package: django, location: "notes/views.py:51", symbol: django.contrib.auth.decorators.login_required}
+  - {package: django, location: "notes/views.py:52", symbol: django.views.decorators.http.require_POST}
+  - {package: django, location: "notes/views.py:56", symbol: django.http.JsonResponse}
+  - {package: django, location: "notes/views.py:57", symbol: django.http.JsonResponse}
+  - {package: django, location: "notes/views.py:60", symbol: django.contrib.auth.decorators.login_required}
+  - {package: django, location: "notes/views.py:65", symbol: django.contrib.messages.success}
+  - {package: django, location: "notes/views.py:66", symbol: django.shortcuts.redirect}
+  - {package: django, location: "notes/views.py:67", symbol: django.shortcuts.render}
+  - {package: django, location: "notes/views.py:72", symbol: django.shortcuts.render}
+  - {package: django, location: "notes/views.py:75", symbol: django.views.decorators.http.require_POST}
+  - {package: django, location: "notes/views.py:78", symbol: django.shortcuts.redirect}
+  - {package: django, location: "notes/views.py:80", symbol: django.conf.settings.THEME_COOKIE}
+  - {package: markdown, location: "notes/rendering.py:2", symbol: markdown}
+  - {package: markdown, location: "notes/rendering.py:22", symbol: markdown.markdown}
+  - {package: markdown, location: "notes/rendering.py:34", symbol: markdown.markdown}
+  - {package: pyyaml, location: "notes/tests/test_fixtures.py:3", symbol: yaml}
+  - {package: pyyaml, location: "notes/tests/test_fixtures.py:14", symbol: yaml.load}
+
+expected_dependencies:
+  - {name: asgiref, version: "3.12.1", scope: main, direct: false, match: none}
+  - {name: bleach, version: "6.2.0", scope: main, direct: true, match: affected}
+  - {name: django, version: "6.0.6", scope: main, direct: true, match: affected}
+  - {name: gunicorn, version: "26.2.0", scope: main, direct: true, match: none}
+  - {name: markdown, version: "3.7", scope: main, direct: true, match: affected}
+  - {name: sqlparse, version: "0.6.0", scope: main, direct: false, match: none}
+  - {name: webencodings, version: "0.5.1", scope: main, direct: false, match: none}
+  - {name: pyyaml, version: "5.3.1", scope: dev, direct: true, match: affected}

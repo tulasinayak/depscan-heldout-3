@@ -1,0 +1,14 @@
+author: demo
+topics:
+  - name: Birds
+    slug: birds
+    notes:
+      - title: Grey heron at the reservoir
+        body: "Standing in the shallows at the **north** end, around 7am."
+      - title: Swifts are back
+        body: "First screaming party over the market square."
+  - name: Plants
+    slug: plants
+    notes:
+      - title: Wood anemones
+        body: "Large patch under the beeches.\n\n- white\n- a few pinkish"
