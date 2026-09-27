@@ -5,15 +5,15 @@
 advisories:
   - id: CVE-2026-48588
     package: django
-    expected: likely_affected
+    expected: uncertain
     scenario: reachable_via_framework
-    reason: "UpdateCacheMiddleware only skipped caching cookie-setting, Vary: Cookie responses when the request had no cookies at all. The site enables per-site caching (UpdateCacheMiddleware/FetchFromCacheMiddleware) and every page renders {% csrf_token %} (theme form in base.html), so responses set the CSRF cookie with Vary: Cookie; visitors carrying the unrelated fieldnotes_theme cookie get those responses stored in the shared DatabaseCache."
+    reason: "Pre-registered as uncertain (was likely_affected): UpdateCacheMiddleware only skipped caching cookie-setting, Vary: Cookie responses when the request had no cookies at all. The site enables per-site caching (UpdateCacheMiddleware/FetchFromCacheMiddleware) and every page renders {% csrf_token %} (theme form in base.html), so responses set the CSRF cookie with Vary: Cookie; visitors carrying the unrelated fieldnotes_theme cookie get those responses stored in the shared DatabaseCache. Uncertain because the cached response is keyed on the full Cookie header, so another client only receives it when sending an identical Cookie header, which limits real exposure."
     key_location: fieldnotes/settings.py:21
   - id: CVE-2026-53878
     package: django
-    expected: likely_not_affected
+    expected: uncertain
     scenario: safe_arguments
-    reason: "DomainNameValidator accepts a trailing newline, which matters only when values bypass form fields and reach a raw HTTP header. Source.domain is only ever set through SourceForm / the admin ModelForm (forms.CharField strips surrounding whitespace, the case Django itself says is unaffected), and the value is only rendered into HTML links, never into a response header."
+    reason: "Pre-registered as uncertain (was likely_not_affected): DomainNameValidator accepts a trailing newline, which matters only when values bypass form fields and reach a raw HTTP header. Source.domain is only ever set through SourceForm / the admin ModelForm (forms.CharField strips surrounding whitespace, the case Django itself says is unaffected), and the value is only rendered into HTML links, never into a response header. Uncertain because forms.CharField strips only leading/trailing whitespace rather than all newlines, so the not-affected call rests on the trigger being a trailing newline plus the value never reaching a header."
     key_location: notes/models.py:21
   - id: CVE-2026-53877
     package: django
@@ -35,9 +35,9 @@ advisories:
     key_location: notes/rendering.py:22
   - id: GHSA-8rfp-98v4-mmr6
     package: bleach
-    expected: likely_affected
+    expected: uncertain
     scenario: reachable_untrusted_input
-    reason: "bleach.clean lets through javascript URIs obfuscated with Unicode > U+00A0 when 'a' is an allowed tag and 'href' an allowed attribute. render_markdown() cleans member-supplied HTML with ALLOWED_TAGS containing 'a' and ALLOWED_ATTRIBUTES {'a': ['href', 'title']}, so the protocol allowlist can be bypassed (browser impact limited, per advisory)."
+    reason: "Pre-registered as uncertain (was likely_affected): bleach.clean lets through javascript URIs obfuscated with Unicode > U+00A0 when 'a' is an allowed tag and 'href' an allowed attribute. render_markdown() cleans member-supplied HTML with ALLOWED_TAGS containing 'a' and ALLOWED_ATTRIBUTES {'a': ['href', 'title']}, so the protocol allowlist can be bypassed (browser impact limited, per advisory). Uncertain because the advisory itself says browsers do not execute these Unicode-obfuscated URIs, so the precondition is met but practical impact is doubtful."
     key_location: notes/rendering.py:23
   - id: GHSA-gj48-438w-jh9v
     package: bleach
