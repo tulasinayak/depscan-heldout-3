@@ -3,7 +3,7 @@
 Django 6.0 site (`fieldnotes`) with per-site caching, Markdown notes sanitised by bleach, and a
 dev-only PyYAML used by the test suite. OSV returns 8 distinct advisories across all pins
 (`requirements.txt` + `requirements-dev.txt`); all 8 are labelled in `expected.yaml`.
-3 likely_affected, 5 likely_not_affected.
+2 likely_affected, 3 likely_not_affected, 3 uncertain.
 
 | advisory | package | expected | why |
 |---|---|---|---|
